@@ -1,0 +1,7 @@
+{
+  "name": "claude.silkwires.usage",
+  "description": "Claude Usage Monitor native host",
+  "path": "C:\\Users\\USER\\Documents\\Rainmeter\\Skins\\ClaudeUsage\\native-host\\launch_host.bat",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://EXTENSION_ID_PLACEHOLDER/"]
+}
