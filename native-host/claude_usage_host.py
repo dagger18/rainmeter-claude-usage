@@ -25,6 +25,8 @@ def main():
     output_file = os.path.join(output_dir, 'usage_data.json')
     sentinel_file = os.path.join(skin_dir, 'refresh_requested.txt')
 
+    history_file = os.path.join(output_dir, 'usage_history.json')
+
     while True:
         msg = _read_message()
         action = msg.get('action')
@@ -32,9 +34,38 @@ def main():
         if action == 'write':
             data = msg.get('data', {})
             os.makedirs(output_dir, exist_ok=True)
+            # Inject lifetime stats so reader.lua can display them without extra reads
+            if os.path.exists(history_file):
+                try:
+                    with open(history_file, 'r', encoding='utf-8') as f:
+                        history = json.load(f)
+                    data['lifetime_avg_pct'] = history.get('lifetime_avg_pct', 0)
+                    data['weeks_recorded'] = history.get('weeks_recorded', 0)
+                except (json.JSONDecodeError, OSError):
+                    pass
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
             _write_message({'ok': True})
+
+        elif action == 'record_week':
+            pct = msg.get('pct', 0)
+            week_end = msg.get('week_end', '')
+            os.makedirs(output_dir, exist_ok=True)
+            history = {'weeks': []}
+            if os.path.exists(history_file):
+                try:
+                    with open(history_file, 'r', encoding='utf-8') as f:
+                        history = json.load(f)
+                except (json.JSONDecodeError, OSError):
+                    history = {'weeks': []}
+            history.setdefault('weeks', [])
+            history['weeks'].append({'week_end': week_end, 'pct': pct})
+            weeks = history['weeks']
+            history['lifetime_avg_pct'] = round(sum(w['pct'] for w in weeks) / len(weeks))
+            history['weeks_recorded'] = len(weeks)
+            with open(history_file, 'w', encoding='utf-8') as f:
+                json.dump(history, f, indent=2)
+            _write_message({'ok': True, 'lifetime_avg_pct': history['lifetime_avg_pct'], 'weeks_recorded': history['weeks_recorded']})
 
         elif action == 'write_continue':
             trigger_file = os.path.join(skin_dir, 'continue_trigger.txt')

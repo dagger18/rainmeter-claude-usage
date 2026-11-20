@@ -30,18 +30,19 @@ function LoadFile()
         local diff = os.time() - ts
         local mins = math.floor(diff / 60)
         if mins < 1 then
-            label = "just now"
+            label = "now"
         elseif mins == 1 then
-            label = "1 min ago"
+            label = "1 min"
         else
-            label = mins .. " min ago"
+            label = mins .. " min"
         end
     end
 
-    SKIN:Bang('!SetVariable', 'SessionPct',   getNum('session_pct'))
-    SKIN:Bang('!SetVariable', 'WeeklyPct',    getNum('weekly_pct'))
-    SKIN:Bang('!SetVariable', 'SessionReset', getStr('session_reset_label'))
-    SKIN:Bang('!SetVariable', 'WeeklyReset',  getStr('weekly_reset_label'))
-    SKIN:Bang('!SetVariable', 'LastUpdated',  label)
-    SKIN:Bang('!SetVariable', 'ErrMsg',       getStr('error'))
+    SKIN:Bang('!SetVariable', 'SessionPct',      getNum('session_pct'))
+    SKIN:Bang('!SetVariable', 'WeeklyPct',       getNum('weekly_pct'))
+    SKIN:Bang('!SetVariable', 'LifetimeAvgPct',  getNum('lifetime_avg_pct'))
+    SKIN:Bang('!SetVariable', 'SessionReset',    getStr('session_reset_label'))
+    SKIN:Bang('!SetVariable', 'WeeklyReset',     getStr('weekly_reset_label'))
+    SKIN:Bang('!SetVariable', 'LastUpdated',     label)
+    SKIN:Bang('!SetVariable', 'ErrMsg',          getStr('error'))
 end

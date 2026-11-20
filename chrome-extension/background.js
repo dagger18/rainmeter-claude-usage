@@ -68,6 +68,7 @@ async function triggerScrape(reason) {
   console.log('[ClaudeUsage] scraped:', data);
   await sendToHost({ action: 'write', data });
   await checkSessionReset(data);
+  await checkWeekReset(data);
 }
 
 function waitForTabLoad(tabId) {
@@ -163,6 +164,29 @@ async function checkSessionReset(data) {
       console.error('[ClaudeUsage] write_continue failed:', e.message);
     }
   }
+}
+
+async function checkWeekReset(data) {
+  if (data.error || data.weekly_pct == null) return;
+
+  const { lastWeeklyPct } = await chrome.storage.local.get('lastWeeklyPct');
+  const last = typeof lastWeeklyPct === 'number' ? lastWeeklyPct : null;
+
+  // Detect reset: pct dropped significantly from last reading
+  if (last !== null && data.weekly_pct < last - 10) {
+    // Only record if the completed week had actual usage (not 0 or error)
+    if (last > 0) {
+      const weekEnd = new Date().toISOString().slice(0, 10);
+      try {
+        const r = await sendToHost({ action: 'record_week', pct: last, week_end: weekEnd });
+        console.log(`[ClaudeUsage] week recorded: ${last}% on ${weekEnd} — lifetime avg: ${r.lifetime_avg_pct}% over ${r.weeks_recorded} weeks`);
+      } catch (e) {
+        console.error('[ClaudeUsage] record_week failed:', e.message);
+      }
+    }
+  }
+
+  await chrome.storage.local.set({ lastWeeklyPct: data.weekly_pct });
 }
 
 async function sendDiscord(content) {
